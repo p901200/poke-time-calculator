@@ -15,6 +15,7 @@ import {
   renderError,
   renderModeSelect,
   renderFlow,
+  renderResult,
   renderShell,
 } from './ui.js';
 
@@ -65,6 +66,17 @@ function buildSummaryText() {
   return '';
 }
 
+function buildShareText() {
+  const nutrition = computeNutrition();
+  const summary = buildSummaryText();
+  if (!nutrition) return '';
+  return [
+    '我在波奇一下 Poké Time 組了一碗波奇！',
+    summary,
+    `熱量 ${nutrition.calories} 大卡｜蛋白質 ${nutrition.protein}g｜碳水 ${nutrition.carb}g｜脂肪 ${nutrition.fat}g｜纖維 ${nutrition.fiber}g`,
+  ].join('\n');
+}
+
 function computeNutrition() {
   if (!data) return null;
 
@@ -100,6 +112,11 @@ function computeNutrition() {
 }
 
 function render() {
+  if (state.showResult) {
+    const nutrition = computeNutrition();
+    renderResult(appMain, state, nutrition, buildSummaryText(), actions);
+    return;
+  }
   if (!state.mode) {
     renderModeSelect(appMain, actions);
     return;
@@ -177,6 +194,55 @@ const actions = {
   setCustomExtra(group, nameZh, qty) {
     state.custom[group][nameZh] = qty;
     render();
+  },
+
+  // ---- 完成 / 分享 / 重新計算 ----
+  finishFlow() {
+    state.showResult = true;
+    state.showShareMenu = false;
+    render();
+  },
+
+  async share() {
+    const text = buildShareText();
+    if (navigator.share) {
+      try {
+        await navigator.share({ title: '波奇一下 Poké Time', text });
+      } catch (err) {
+        // 使用者取消分享，不做任何事
+      }
+      return;
+    }
+    state.showShareMenu = true;
+    render();
+  },
+
+  shareToLine() {
+    const url = `https://line.me/R/msg/text/?${encodeURIComponent(buildShareText())}`;
+    window.open(url, '_blank', 'noopener');
+  },
+
+  shareToFacebook() {
+    const url = `https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(
+      window.location.href
+    )}&quote=${encodeURIComponent(buildShareText())}`;
+    window.open(url, '_blank', 'noopener');
+  },
+
+  async copyResultText() {
+    const text = buildShareText();
+    try {
+      await navigator.clipboard.writeText(text);
+      alert('已複製結果文字，可以貼到 Instagram 貼文或限時動態！');
+    } catch (err) {
+      alert('複製失敗，請手動選取文字複製');
+    }
+    state.showShareMenu = false;
+    render();
+  },
+
+  resetAll() {
+    window.location.reload();
   },
 };
 
