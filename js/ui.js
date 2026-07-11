@@ -11,18 +11,7 @@ import { CLASSIC_STEPS, CUSTOM_STEPS } from './state.js';
 
 function brandHeader() {
   return h('header', { class: 'brand-header' }, [
-    h('div', { class: 'brand-header__inner' }, [
-      h('div', { class: 'brand-mark' }, [
-        h('span', { class: 'brand-mark__bowl' }),
-      ]),
-      h('div', { class: 'brand-text' }, [
-        h('p', { class: 'brand-eyebrow' }, 'POKÉ TIME 營養試算'),
-        h('h1', { class: 'brand-name' }, [
-          BRAND.nameZh,
-          h('span', { class: 'brand-name__en' }, BRAND.nameEn),
-        ]),
-      ]),
-    ]),
+    h('h1', { class: 'brand-name' }, `${BRAND.nameZh} ${BRAND.nameEn} 營養計算器`),
   ]);
 }
 
@@ -417,7 +406,7 @@ function macroRing(nutrition) {
     const fatDeg = 360 - proteinDeg - carbDeg;
     const p1 = proteinDeg;
     const p2 = p1 + carbDeg;
-    ringStyle = `background: conic-gradient(var(--coral) 0deg ${p1}deg, var(--mango) ${p1}deg ${p2}deg, var(--teal) ${p2}deg ${p2 + fatDeg}deg);`;
+    ringStyle = `background: conic-gradient(var(--coral) 0deg ${p1}deg, var(--mango) ${p1}deg ${p2}deg, var(--ocean) ${p2}deg ${p2 + fatDeg}deg);`;
   }
 
   return h('div', { class: 'ring', style: ringStyle }, [
@@ -450,7 +439,7 @@ export function nutritionSummary(nutrition, summaryText) {
       h('div', { class: 'legend' }, [
         macroLegendRow('var(--coral)', '蛋白質', nutrition.protein, 'g'),
         macroLegendRow('var(--mango)', '碳水化合物', nutrition.carb, 'g'),
-        macroLegendRow('var(--teal)', '脂肪', nutrition.fat, 'g'),
+        macroLegendRow('var(--ocean)', '脂肪', nutrition.fat, 'g'),
         macroLegendRow('var(--avocado)', '膳食纖維', nutrition.fiber, 'g'),
       ]),
     ]),
@@ -483,7 +472,7 @@ export function renderFlow(root, data, state, actions, nutrition, summaryText) {
     isLast
       ? h(
           'button',
-          { class: 'btn btn--primary', type: 'button', onClick: actions.backToModeSelect },
+          { class: 'btn btn--primary', type: 'button', onClick: actions.finishFlow },
           '完成 ✓'
         )
       : h(
@@ -509,6 +498,56 @@ export function renderFlow(root, data, state, actions, nutrition, summaryText) {
       ]),
       nutritionSummary(nutrition, summaryText),
       nav,
+    ])
+  );
+}
+
+// ---------- 最終結果畫面 ----------
+
+function shareMenu(actions) {
+  return h('div', { class: 'share-menu' }, [
+    h(
+      'button',
+      { class: 'share-menu__item', type: 'button', onClick: actions.shareToLine },
+      'LINE'
+    ),
+    h(
+      'button',
+      { class: 'share-menu__item', type: 'button', onClick: actions.shareToFacebook },
+      'Facebook'
+    ),
+    h(
+      'button',
+      { class: 'share-menu__item', type: 'button', onClick: actions.copyResultText },
+      '複製文字（貼到 IG）'
+    ),
+  ]);
+}
+
+export function renderResult(root, state, nutrition, summaryText, actions) {
+  const modeLabel = state.mode === 'classic' ? '經典波奇 Classic' : '客製波奇 Custom';
+
+  mount(
+    root,
+    h('div', { class: 'result' }, [
+      h('div', { class: 'flow__mode-tag' }, modeLabel),
+      h('h2', { class: 'result__title' }, '完成！這是你的波奇營養成果'),
+      nutritionSummary(nutrition, summaryText),
+      h('div', { class: 'result-actions' }, [
+        h('div', { class: 'result-actions__share-wrap' }, [
+          h(
+            'button',
+            { class: 'btn btn--share', type: 'button', onClick: actions.share },
+            '分享 ↗'
+          ),
+          state.showShareMenu ? shareMenu(actions) : null,
+        ]),
+        h(
+          'button',
+          { class: 'btn btn--ghost', type: 'button', onClick: actions.resetAll },
+          '重新計算'
+        ),
+      ]),
     ])
   );
 }
