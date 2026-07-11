@@ -630,6 +630,32 @@ input {
   gap: 14px;
 }
 
+.result-card {
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-lg);
+  padding: 20px 16px 22px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+  box-shadow: var(--shadow);
+}
+
+.result-card__brand {
+  margin: 0;
+  font-family: var(--font-display);
+  font-weight: 700;
+  font-size: 14px;
+  color: var(--coral-dark);
+  letter-spacing: 0.02em;
+}
+
+.result-card .summary,
+.result-card .summary--empty {
+  width: 100%;
+}
+
 .result__title {
   margin: 0;
   font-family: var(--font-display);
