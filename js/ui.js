@@ -391,25 +391,45 @@ export function canGoNext(data, state) {
 
 // ---------- 營養總覽（含甜甜圈圖） ----------
 
-function macroRing(nutrition) {
+function macroRingSVG(nutrition) {
+  const r = 50;
+  const strokeWidth = 16;
+  const circumference = 2 * Math.PI * r;
+
   const proteinCal = Math.max(0, nutrition.protein) * 4;
   const carbCal = Math.max(0, nutrition.carb) * 4;
   const fatCal = Math.max(0, nutrition.fat) * 9;
   const macroTotal = proteinCal + carbCal + fatCal;
 
-  let ringStyle;
+  let circlesMarkup;
+
   if (macroTotal <= 0) {
-    ringStyle = 'background: conic-gradient(var(--line) 0deg 360deg);';
+    circlesMarkup = `<circle cx="60" cy="60" r="${r}" fill="none" stroke="#e9dccb" stroke-width="${strokeWidth}" />`;
   } else {
-    const proteinDeg = (proteinCal / macroTotal) * 360;
-    const carbDeg = (carbCal / macroTotal) * 360;
-    const fatDeg = 360 - proteinDeg - carbDeg;
-    const p1 = proteinDeg;
-    const p2 = p1 + carbDeg;
-    ringStyle = `background: conic-gradient(var(--coral) 0deg ${p1}deg, var(--mango) ${p1}deg ${p2}deg, var(--ocean) ${p2}deg ${p2 + fatDeg}deg);`;
+    const segments = [
+      { color: '#f2542d', value: proteinCal }, // 蛋白質 = coral
+      { color: '#f3b23e', value: carbCal }, // 碳水 = mango
+      { color: '#5ec2dd', value: fatCal }, // 脂肪 = ocean
+    ];
+    let offsetAcc = 0;
+    circlesMarkup = segments
+      .filter((seg) => seg.value > 0)
+      .map((seg) => {
+        const length = (seg.value / macroTotal) * circumference;
+        const dasharray = `${length} ${circumference - length}`;
+        const dashoffset = -offsetAcc;
+        offsetAcc += length;
+        return `<circle cx="60" cy="60" r="${r}" fill="none" stroke="${seg.color}" stroke-width="${strokeWidth}" stroke-dasharray="${dasharray}" stroke-dashoffset="${dashoffset}" />`;
+      })
+      .join('');
   }
 
-  return h('div', { class: 'ring', style: ringStyle }, [
+  return `<svg viewBox="0 0 120 120" width="100%" height="100%"><g transform="rotate(-90 60 60)">${circlesMarkup}</g></svg>`;
+}
+
+function macroRing(nutrition) {
+  return h('div', { class: 'ring' }, [
+    h('div', { class: 'ring__svg-wrap', html: macroRingSVG(nutrition) }),
     h('div', { class: 'ring__hole' }, [
       h('span', { class: 'ring__value' }, String(nutrition.calories)),
       h('span', { class: 'ring__unit' }, '大卡'),
@@ -487,17 +507,23 @@ export function renderFlow(root, data, state, actions, nutrition, summaryText) {
         ),
   ]);
 
+  const currentStepKey = steps[state.step - 1].key;
+  const showOptionalHint = currentStepKey === 'extraProtein' || currentStepKey === 'extraTopping';
+
   mount(
     root,
     h('div', { class: 'flow' }, [
       h('div', { class: 'flow__mode-tag' }, state.mode === 'classic' ? '經典波奇 Classic' : '客製波奇 Custom'),
       stepper(steps, state.step),
-      h('div', { class: 'step-panel' }, [
-        h('h2', { class: 'step-panel__title' }, steps[state.step - 1].title),
-        content,
-      ]),
       nutritionSummary(nutrition, summaryText),
       nav,
+      h('div', { class: 'step-panel' }, [
+        h('h2', { class: 'step-panel__title' }, [
+          steps[state.step - 1].title,
+          showOptionalHint ? h('span', { class: 'step-panel__hint' }, ' (無加購可略過)') : null,
+        ]),
+        content,
+      ]),
     ])
   );
 }
@@ -537,6 +563,11 @@ export function renderResult(root, state, nutrition, summaryText, actions) {
         nutritionSummary(nutrition, summaryText),
       ]),
       h('div', { class: 'result-actions' }, [
+        h(
+          'button',
+          { class: 'btn btn--ghost', type: 'button', onClick: actions.resetAll },
+          '重新計算'
+        ),
         h('div', { class: 'result-actions__share-wrap' }, [
           h(
             'button',
@@ -550,11 +581,6 @@ export function renderResult(root, state, nutrition, summaryText, actions) {
           ),
           state.showShareMenu ? shareMenu(actions) : null,
         ]),
-        h(
-          'button',
-          { class: 'btn btn--ghost', type: 'button', onClick: actions.resetAll },
-          '重新計算'
-        ),
       ]),
     ])
   );
