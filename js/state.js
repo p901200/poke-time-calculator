@@ -8,6 +8,8 @@ export function createInitialState() {
   return {
     mode: null, // 'classic' | 'custom'
     step: 0,
+    showResult: false,
+    showShareMenu: false,
 
     classic: {
       classicItemName: null,
