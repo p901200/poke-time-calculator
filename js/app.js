@@ -77,6 +77,48 @@ function buildShareText() {
   ].join('\n');
 }
 
+function ensureHtml2Canvas(timeoutMs = 8000) {
+  return new Promise((resolve, reject) => {
+    if (window.html2canvas) {
+      resolve(window.html2canvas);
+      return;
+    }
+    const start = Date.now();
+    const timer = setInterval(() => {
+      if (window.html2canvas) {
+        clearInterval(timer);
+        resolve(window.html2canvas);
+      } else if (Date.now() - start > timeoutMs) {
+        clearInterval(timer);
+        reject(new Error('圖片產生工具讀取逾時，請檢查網路連線'));
+      }
+    }, 100);
+  });
+}
+
+async function captureResultImage() {
+  const node = document.getElementById('result-card');
+  if (!node) return null;
+  const html2canvas = await ensureHtml2Canvas();
+  const canvas = await html2canvas(node, {
+    backgroundColor: '#fff7ef',
+    scale: 2,
+    useCORS: true,
+  });
+  return new Promise((resolve) => canvas.toBlob((blob) => resolve(blob), 'image/png'));
+}
+
+function downloadBlob(blob, filename) {
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = filename;
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  setTimeout(() => URL.revokeObjectURL(url), 4000);
+}
+
 function computeNutrition() {
   if (!data) return null;
 
@@ -204,28 +246,52 @@ const actions = {
   },
 
   async share() {
-    const text = buildShareText();
-    if (navigator.share) {
-      try {
-        await navigator.share({ title: '波奇一下 Poké Time', text });
-      } catch (err) {
-        // 使用者取消分享，不做任何事
-      }
-      return;
-    }
-    state.showShareMenu = true;
+    state.isCapturing = true;
     render();
+
+    try {
+      const blob = await captureResultImage();
+      if (!blob) throw new Error('無法產生結果圖片');
+
+      const file = new File([blob], 'poke-time-result.png', { type: 'image/png' });
+
+      if (navigator.canShare && navigator.canShare({ files: [file] })) {
+        await navigator.share({
+          files: [file],
+          title: '波奇一下 Poké Time',
+          text: buildShareText(),
+        });
+      } else {
+        // 瀏覽器不支援分享圖片檔，改成直接下載，讓使用者自行分享
+        downloadBlob(blob, 'poke-time-result.png');
+        state.showShareMenu = true;
+        alert('這個瀏覽器不支援直接分享圖片，圖片已經下載，可以到相簿手動分享到 IG / LINE / FB！');
+      }
+    } catch (err) {
+      if (err && err.name === 'AbortError') {
+        // 使用者自己取消分享，不用特別處理
+      } else {
+        console.error(err);
+        state.showShareMenu = true;
+      }
+    } finally {
+      state.isCapturing = false;
+      render();
+    }
+  },
+
+  async downloadImage() {
+    try {
+      const blob = await captureResultImage();
+      if (blob) downloadBlob(blob, 'poke-time-result.png');
+    } catch (err) {
+      console.error(err);
+      alert('圖片產生失敗，請再試一次');
+    }
   },
 
   shareToLine() {
     const url = `https://line.me/R/msg/text/?${encodeURIComponent(buildShareText())}`;
-    window.open(url, '_blank', 'noopener');
-  },
-
-  shareToFacebook() {
-    const url = `https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(
-      window.location.href
-    )}&quote=${encodeURIComponent(buildShareText())}`;
     window.open(url, '_blank', 'noopener');
   },
 
