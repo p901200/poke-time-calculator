@@ -508,13 +508,13 @@ function shareMenu(actions) {
   return h('div', { class: 'share-menu' }, [
     h(
       'button',
-      { class: 'share-menu__item', type: 'button', onClick: actions.shareToLine },
-      'LINE'
+      { class: 'share-menu__item', type: 'button', onClick: actions.downloadImage },
+      '下載結果圖片'
     ),
     h(
       'button',
-      { class: 'share-menu__item', type: 'button', onClick: actions.shareToFacebook },
-      'Facebook'
+      { class: 'share-menu__item', type: 'button', onClick: actions.shareToLine },
+      '分享文字到 LINE'
     ),
     h(
       'button',
@@ -530,15 +530,23 @@ export function renderResult(root, state, nutrition, summaryText, actions) {
   mount(
     root,
     h('div', { class: 'result' }, [
-      h('div', { class: 'flow__mode-tag' }, modeLabel),
-      h('h2', { class: 'result__title' }, '完成！這是你的波奇營養成果'),
-      nutritionSummary(nutrition, summaryText),
+      h('div', { class: 'result-card', id: 'result-card' }, [
+        h('p', { class: 'result-card__brand' }, `${BRAND.nameZh} ${BRAND.nameEn}`),
+        h('div', { class: 'flow__mode-tag' }, modeLabel),
+        h('h2', { class: 'result__title' }, '完成！這是你的波奇營養成果'),
+        nutritionSummary(nutrition, summaryText),
+      ]),
       h('div', { class: 'result-actions' }, [
         h('div', { class: 'result-actions__share-wrap' }, [
           h(
             'button',
-            { class: 'btn btn--share', type: 'button', onClick: actions.share },
-            '分享 ↗'
+            {
+              class: 'btn btn--share',
+              type: 'button',
+              disabled: state.isCapturing,
+              onClick: actions.share,
+            },
+            state.isCapturing ? '圖片產生中…' : '分享畫面 ↗'
           ),
           state.showShareMenu ? shareMenu(actions) : null,
         ]),
