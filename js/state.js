@@ -10,6 +10,7 @@ export function createInitialState() {
     step: 0,
     showResult: false,
     showShareMenu: false,
+    isCapturing: false,
 
     classic: {
       classicItemName: null,
