@@ -13,7 +13,7 @@
 //    網頁即可讀到最新資料。
 // ============================================================
 
-export const SHEET_ID = 'YOUR_GOOGLE_SHEET_ID_HERE';
+export const SHEET_ID = '1x6GTKkR_el0q2ALPnqEDNVO_UVuGLL8g3-WooK7XSZM';
 
 export const SHEET_NAMES = {
   calculatorData: 'calculator_data',
