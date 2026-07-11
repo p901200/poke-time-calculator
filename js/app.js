@@ -256,11 +256,7 @@ const actions = {
       const file = new File([blob], 'poke-time-result.png', { type: 'image/png' });
 
       if (navigator.canShare && navigator.canShare({ files: [file] })) {
-        await navigator.share({
-          files: [file],
-          title: '波奇一下 Poké Time',
-          text: buildShareText(),
-        });
+        await navigator.share({ files: [file] });
       } else {
         // 瀏覽器不支援分享圖片檔，改成直接下載，讓使用者自行分享
         downloadBlob(blob, 'poke-time-result.png');
