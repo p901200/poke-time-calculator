@@ -2,7 +2,7 @@
 // calculator.js — 營養計算邏輯
 // ============================================================
 
-import { MEAT_MULTIPLIER, KIMCHI_NAME } from './config.js';
+import { MEAT_MULTIPLIER, KIMCHI_NAME, NO_SAUCE_LABEL } from './config.js';
 
 const EMPTY = { protein: 0, carb: 0, fat: 0, fiber: 0, calories: 0 };
 
@@ -116,7 +116,8 @@ export function calculateCustom({
   extraToppings = [],
 }) {
   const base = findByNameZh(calculatorData, baseName);
-  const sauce = findByNameZh(calculatorData, sauceName);
+  const sauce =
+    sauceName === NO_SAUCE_LABEL ? EMPTY : findByNameZh(calculatorData, sauceName);
   if (!base || !sauce) return null;
 
   let total = { ...EMPTY };
