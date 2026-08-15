@@ -34,6 +34,9 @@ export const MEAT_MULTIPLIER = {
 // 韓式泡菜辣雞波奇的額外固定配菜名稱（用來比對 classic_menu 的「額外固定配菜」欄位）
 export const KIMCHI_NAME = '韓式泡菜';
 
+// 客製波奇「不加醬」選項的顯示名稱（不對應 calculator_data 裡的任何一列，營養視為 0）
+export const NO_SAUCE_LABEL = '不加醬';
+
 // 品牌文字
 export const BRAND = {
   nameZh: '波奇一下',
