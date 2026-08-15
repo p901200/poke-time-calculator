@@ -3,7 +3,7 @@
 // ============================================================
 
 import { h, mount, clear } from './dom.js';
-import { BRAND, CUSTOM_TOPPING_COUNT } from './config.js';
+import { BRAND, CUSTOM_TOPPING_COUNT, NO_SAUCE_LABEL } from './config.js';
 import { itemsByCategory, findByNameZh } from './calculator.js';
 import { CLASSIC_STEPS, CUSTOM_STEPS } from './state.js';
 
@@ -318,10 +318,11 @@ function customStepContent(data, state, actions) {
 
   if (stepKey === 'sauce') {
     const sauces = itemsByCategory(calculatorData, 'Sauce');
+    const options = [...sauces, { nameZh: NO_SAUCE_LABEL, nameEn: 'No Sauce' }];
     return h(
       'div',
       { class: 'option-grid' },
-      sauces.map((sauce) =>
+      options.map((sauce) =>
         selectCard({
           label: sauce.nameZh,
           sublabel: sauce.nameEn,
@@ -437,9 +438,12 @@ function macroRing(nutrition) {
   ]);
 }
 
-function macroLegendRow(color, label, value, unit) {
+function macroLegendRow(color, label, value, unit, isRingSegment = true) {
   return h('div', { class: 'legend-row' }, [
-    h('span', { class: 'legend-dot', style: `background:${color}` }),
+    h('span', {
+      class: `legend-dot${isRingSegment ? '' : ' legend-dot--square'}`,
+      style: `background:${color}`,
+    }),
     h('span', { class: 'legend-label' }, label),
     h('span', { class: 'legend-value' }, `${value} ${unit}`),
   ]);
@@ -460,9 +464,10 @@ export function nutritionSummary(nutrition, summaryText) {
         macroLegendRow('var(--coral)', '蛋白質', nutrition.protein, 'g'),
         macroLegendRow('var(--mango)', '碳水化合物', nutrition.carb, 'g'),
         macroLegendRow('var(--ocean)', '脂肪', nutrition.fat, 'g'),
-        macroLegendRow('var(--avocado)', '膳食纖維', nutrition.fiber, 'g'),
+        macroLegendRow('var(--avocado)', '膳食纖維', nutrition.fiber, 'g', false),
       ]),
     ]),
+    h('p', { class: 'summary__note' }, '＊圓餅圖為蛋白質／碳水／脂肪的熱量占比，膳食纖維不計入熱量、故不列入圖中'),
   ]);
 }
 
